@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proofs ROI Calculator</title>
+    <link rel="icon" type="image/svg+xml" href="https://www.proofs.io/favicon.svg">
     <style>
         * {
             box-sizing: border-box;
@@ -37,15 +38,34 @@
             border-bottom: 1px solid #eee;
         }
 
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo {
+            height: 40px;
+            width: auto;
+        }
+
         .title {
             font-size: 24px;
             font-weight: 600;
         }
 
-        .toggle-container {
+        .period-toggle {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .period-toggle label {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 4px;
+            cursor: pointer;
+            margin: 0;
         }
 
         .tabs {
@@ -108,7 +128,7 @@
             color: #666;
         }
 
-        input {
+        input[type="number"] {
             width: 100%;
             padding: 8px;
             border: 1px solid #ddd;
@@ -143,10 +163,6 @@
             border-top: 1px solid #ddd;
         }
 
-        .total-cost .cost-value {
-            color: #2563eb;
-        }
-
         .comparison-card {
             background-color: #eff6ff;
             padding: 20px;
@@ -168,10 +184,17 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1 class="title">Proofs ROI Calculator</h1>
-            <div class="toggle-container">
-                <label for="showAnnual">Show Annual</label>
-                <input type="checkbox" id="showAnnual">
+            <div class="header-left">
+                <img src="LOGO_URL_HERE" alt="Proofs Logo" class="logo">
+                <h1 class="title">ROI Calculator</h1>
+            </div>
+            <div class="period-toggle">
+                <label>
+                    <input type="radio" name="period" value="monthly" checked> Monthly
+                </label>
+                <label>
+                    <input type="radio" name="period" value="annual"> Annual
+                </label>
             </div>
         </div>
 
@@ -186,19 +209,19 @@
                 <div class="input-group">
                     <h3>Team Configuration</h3>
                     <div class="input-field">
-                        <label for="seAnnualSalary">SE Annual Salary ($)</label>
+                        <label>SE Annual Salary ($)</label>
                         <input type="number" id="seAnnualSalary" value="150000">
                     </div>
                     <div class="input-field">
-                        <label for="numberOfSEs">Number of SEs</label>
+                        <label>Number of SEs</label>
                         <input type="number" id="numberOfSEs" value="3">
                     </div>
                     <div class="input-field">
-                        <label for="currentPocDays">Current POC Build Time (days)</label>
+                        <label>Current POC Build Time (days)</label>
                         <input type="number" id="currentPocDays" value="40">
                     </div>
                     <div class="input-field">
-                        <label for="currentMonthlyPocs">Current Monthly POCs</label>
+                        <label>Current Monthly POCs</label>
                         <input type="number" id="currentMonthlyPocs" value="2">
                     </div>
                 </div>
@@ -206,11 +229,11 @@
                 <div class="input-group">
                     <h3>Proofs Pricing</h3>
                     <div class="input-field">
-                        <label for="proofsBasePlatformCost">Monthly Platform Cost ($)</label>
+                        <label>Monthly Platform Cost ($)</label>
                         <input type="number" id="proofsBasePlatformCost" value="5000">
                     </div>
                     <div class="input-field">
-                        <label for="proofsPerPocCost">Cost per POC ($)</label>
+                        <label>Cost per POC ($)</label>
                         <input type="number" id="proofsPerPocCost" value="500">
                     </div>
                 </div>
@@ -248,7 +271,7 @@
                 </div>
 
                 <div class="comparison-card">
-                    <h3>Total Monthly Cost Comparison</h3>
+                    <h3>Total Cost Comparison</h3>
                     <div class="grid" style="margin-top: 15px;">
                         <div class="cost-item">
                             <label>Current Total Cost</label>
@@ -295,20 +318,16 @@
         const WORKING_DAYS_PER_MONTH = 21;
 
         // Elements
-        const showAnnualToggle = document.getElementById('showAnnual');
         const tabs = document.querySelectorAll('.tab');
         const tabContents = document.querySelectorAll('.tab-content');
+        const periodRadios = document.querySelectorAll('input[name="period"]');
 
         // Tab switching
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 const tabId = tab.dataset.tab;
-                
-                // Update active tab
                 tabs.forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
-                
-                // Show active content
                 tabContents.forEach(content => {
                     content.classList.remove('active');
                     if (content.id === tabId) {
@@ -318,16 +337,14 @@
             });
         });
 
-        // Format currency
-        function formatCurrency(value, showAnnual = false) {
-            const amount = showAnnual ? value * 12 : value;
+        function formatCurrency(value, isAnnual = false) {
+            const amount = isAnnual ? value * 12 : value;
             return '$' + amount.toLocaleString(undefined, {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0
             });
         }
 
-        // Calculate ROI
         function calculateROI() {
             const inputs = {
                 seAnnualSalary: parseFloat(document.getElementById('seAnnualSalary').value) || 0,
@@ -338,51 +355,41 @@
                 proofsPerPocCost: parseFloat(document.getElementById('proofsPerPocCost').value) || 0
             };
 
-            // Calculate SE costs
             const monthlySeBaseCost = (inputs.seAnnualSalary / 12) * inputs.numberOfSEs;
             const monthlySeFullCost = monthlySeBaseCost * FULLY_LOADED_MULTIPLIER;
             
-            // Current State Calculations
             const currentSeDaysPerMonth = inputs.currentMonthlyPocs * inputs.currentPocDays;
             const currentMonthlySeCost = (monthlySeFullCost * (currentSeDaysPerMonth / WORKING_DAYS_PER_MONTH));
             
-            // Proofs Costs
             const monthlyProofsPocCosts = inputs.currentMonthlyPocs * inputs.proofsPerPocCost;
             const monthlyProofsTotalCost = inputs.proofsBasePlatformCost + monthlyProofsPocCosts;
             
-            // Savings Calculations
             const monthlySavings = currentMonthlySeCost - monthlyProofsTotalCost;
-            const totalInvestmentYear1 = (inputs.proofsBasePlatformCost * 12);
+            const totalInvestmentYear1 = inputs.proofsBasePlatformCost * 12;
             const roi = ((monthlySavings * 12) / totalInvestmentYear1) * 100;
 
-            // Update UI
-            const showAnnual = showAnnualToggle.checked;
+            const isAnnual = document.querySelector('input[name="period"][value="annual"]').checked;
 
-            // Current Costs
-            document.getElementById('currentSeCost').textContent = formatCurrency(currentMonthlySeCost, showAnnual);
-            document.getElementById('currentTotalCost').textContent = formatCurrency(currentMonthlySeCost, showAnnual);
-
-            // Proofs Costs
-            document.getElementById('proofsPlatformCost').textContent = formatCurrency(inputs.proofsBasePlatformCost, showAnnual);
-            document.getElementById('proofsPocCosts').textContent = formatCurrency(monthlyProofsPocCosts, showAnnual);
-            document.getElementById('proofsTotalCost').textContent = formatCurrency(monthlyProofsTotalCost, showAnnual);
-
-            // Comparison
-            document.getElementById('comparisonCurrentCost').textContent = formatCurrency(currentMonthlySeCost, showAnnual);
-            document.getElementById('comparisonProofsCost').textContent = formatCurrency(monthlyProofsTotalCost, showAnnual);
-
-            // Impact
-            document.getElementById('netSavings').textContent = formatCurrency(monthlySavings, showAnnual);
+            document.getElementById('currentSeCost').textContent = formatCurrency(currentMonthlySeCost, isAnnual);
+            document.getElementById('currentTotalCost').textContent = formatCurrency(currentMonthlySeCost, isAnnual);
+            document.getElementById('proofsPlatformCost').textContent = formatCurrency(inputs.proofsBasePlatformCost, isAnnual);
+            document.getElementById('proofsPocCosts').textContent = formatCurrency(monthlyProofsPocCosts, isAnnual);
+            document.getElementById('proofsTotalCost').textContent = formatCurrency(monthlyProofsTotalCost, isAnnual);
+            document.getElementById('comparisonCurrentCost').textContent = formatCurrency(currentMonthlySeCost, isAnnual);
+            document.getElementById('comparisonProofsCost').textContent = formatCurrency(monthlyProofsTotalCost, isAnnual);
+            document.getElementById('netSavings').textContent = formatCurrency(monthlySavings, isAnnual);
             document.getElementById('roi').textContent = `${Math.round(roi)}%`;
             document.getElementById('timeToMarket').textContent = `${inputs.currentPocDays - PROOFS_POC_DAYS} days faster`;
         }
 
         // Add event listeners
-        document.querySelectorAll('input').forEach(input => {
+        document.querySelectorAll('input[type="number"]').forEach(input => {
             input.addEventListener('input', calculateROI);
         });
 
-        showAnnualToggle.addEventListener('change', calculateROI);
+        periodRadios.forEach(radio => {
+            radio.addEventListener('change', calculateROI);
+        });
 
         // Initial calculation
         calculateROI();
